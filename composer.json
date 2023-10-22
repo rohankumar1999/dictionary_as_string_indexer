@@ -1,0 +1,9 @@
+{
+    "name": "checkout/hw3",
+    "require": {
+        "seekquarry/yioop": "dev-master"
+    },
+    "config": {
+        "secure-http": false
+    }
+}
