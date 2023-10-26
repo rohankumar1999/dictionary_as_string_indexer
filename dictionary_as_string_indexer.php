@@ -8,6 +8,7 @@ use seekquarry\yioop\library\CrawlConstants;
 use seekquarry\yioop\library\PhraseParser;
 use seekquarry\yioop\library\FetchUrl;
 use seekquarry\yioop\library\processors\HtmlProcessor;
+use seekquarry\yioop\library\PackedTableTools;
 
 require_once "vendor/autoload.php";
 /*
@@ -22,72 +23,14 @@ $seed_urls = file("my_seeds.txt");
 $documents[count($seed_urls)];
 $urls = [];
 foreach ($seed_urls as $url) {
-    $urls[] = [CrawlConstants::URL => "$url"];
+    $url = rtrim($url);
+    $urls[] = [CrawlConstants::URL => $url];
 }
-// foreach ($urls as $url) {
-//     print_r(FetchUrl::getPages(
-//         [$url],
-//          // we could list more urls to download
-//     ));
-// }
-
 $web_pages = FetchUrl::getPages(
-    [
-        [CrawlConstants::URL => "https://time.is/"],
-        [CrawlConstants::URL => "https://www.time.gov/"],
-        [CrawlConstants::URL => "https://vclock.com/time/"],
-        [CrawlConstants::URL => "https://www.timeanddate.com/worldclock/usa/san-jose"],
-        [CrawlConstants::URL => "https://clock.zone/"],
-        [CrawlConstants::URL => "https://time.is/"],
-        [CrawlConstants::URL => "https://www.timeanddate.com/worldclock/usa/san-jose"],
-        [CrawlConstants::URL => "https://vclock.com/time/san-jose-california-united-states/"],
-        [CrawlConstants::URL => "https://24timezones.com/United-States/time"],
-        [CrawlConstants::URL => "https://time.is/United_States"],
-        [CrawlConstants::URL => "https://registertovote.ca.gov/"],
-        [CrawlConstants::URL => "https://www.usa.gov/register-to-vote"],
-        [CrawlConstants::URL => "https://www.sos.ca.gov/elections/voting-resources/voting-california/registering-vote"],
-        [CrawlConstants::URL => "https://vote.gov/register/ca/"],
-        [CrawlConstants::URL => "https://vote.gov/"],
-        [CrawlConstants::URL => "https://www.usa.gov/register-to-vote"],
-        [CrawlConstants::URL => "https://www.vote.org/register-to-vote/"],
-        [CrawlConstants::URL => "https://www.sos.ca.gov/elections/voter-registration"],
-        [CrawlConstants::URL => "https://registertovote.ca.gov/"],
-        [CrawlConstants::URL => "https://www.sos.ca.gov/elections/voting-resources/voting-california/registering-vote"],
-        [CrawlConstants::URL => "https://www.theknot.com/content/how-to-tie-a-tie"],
-        [CrawlConstants::URL => "https://www.youtube.com/watch?v=xAg7z6u4NE8"],
-        [CrawlConstants::URL => "https://www.ties.com/how-to-tie-a-tie"],
-        [CrawlConstants::URL => "https://www.wikihow.com/Tie-a-Tie"],
-        [CrawlConstants::URL => "https://www.reddit.com/r/interestingasfuck/comments/10ub13n/the_easiest_technique_to_tie_the_knot/"],
-        [CrawlConstants::URL => "https://www.bing.com/videos/search?q=How+to+tie+a+tie%3f&qpvt=How+to+tie+a+tie%3f&FORM=VDRE"],
-        [CrawlConstants::URL => "https://www.wikihow.com/Tie-a-Tie"],
-        [CrawlConstants::URL => "https://www.ties.com/how-to-tie-a-tie"],
-        [CrawlConstants::URL => "https://bespokeunit.com/suits/ties/how-to-tie/"],
-        [CrawlConstants::URL => "https://www.nordstrom.com/browse/content/blog/how-to-tie-a-tie"],
-        [CrawlConstants::URL => "https://www.systemrequirementslab.com/cyri"],
-        [CrawlConstants::URL => "https://www.pcgamebenchmark.com/"],
-        [CrawlConstants::URL => "https://technical.city/en/can-i-run-it"],
-        [CrawlConstants::URL => "https://www.reddit.com/r/lowendgaming/comments/4j6no4/how_reliable_is_can_you_run_it/"],
-        [CrawlConstants::URL => "https://steamcommunity.com/discussions/forum/12/558747922439324697"],
-        [CrawlConstants::URL => "https://www.systemrequirementslab.com/cyri"],
-        [CrawlConstants::URL => "https://www.pcgamebenchmark.com/"],
-        [CrawlConstants::URL => "https://technical.city/en/can-i-run-it"],
-        [CrawlConstants::URL => "https://www.systemrequirementslab.com/all-games-list/"],
-        [CrawlConstants::URL => "https://www.systemrequirementslab.com/cyri-score"],
-        [CrawlConstants::URL => "https://support.google.com/assistant/answer/7554088?hl=en&co=GENIE.Platform%3DAndroid"],
-        [CrawlConstants::URL => "https://www.shazam.com/home"],
-        [CrawlConstants::URL => "https://blog.google/products/search/hum-to-search/"],
-        [CrawlConstants::URL => "https://www.howtogeek.com/what-song-is-this-identify-music-youve-heard/"],
-        [CrawlConstants::URL => "https://support.apple.com/en-us/HT210331"],
-        [CrawlConstants::URL => "https://www.aha-music.com/"],
-        [CrawlConstants::URL => "https://www.midomi.com/"],
-        [CrawlConstants::URL => "https://www.shazam.com/"],
-        [CrawlConstants::URL => "https://songguesser.com/"],
-        [CrawlConstants::URL => "https://www.aha-music.com/identify-songs-music-recognition-online"]
-    ]    
+    $urls
      // we could list more urls to download
 );
-// print_r($web_pages);
-$html = new HtmlProcessor(max_description_len:2000, summarizer_option:CrawlConstants::CENTROID_WEIGHTED_SUMMARIZER);
+$html = new HtmlProcessor(max_description_len:20000, summarizer_option:CrawlConstants::CENTROID_WEIGHTED_SUMMARIZER);
 // // print_r($pages[0]['q']);
 // print_r(preg_split("/\s+|\d+|\W+/", $html->process($pages[0]['q'], "https://www.yahoo.com/")['q']));
 for($a = 0; $a<count($seed_urls); $a++){
@@ -114,6 +57,44 @@ for ($i = 0; $i < count($documents); $i++) {
 }
 
 ksort($inverted_index);
-print_r($inverted_index);
+// print_r($inverted_index);
 print(count($inverted_index));
+print_r("\n");
+$line1 = "";
+$num_words = str_pad(count($inverted_index), 8, "0", STR_PAD_LEFT);
+$line1 .= substr($num_words, -8);
+$line1 .= " ";
+$idx = 0;
+
+foreach (array_keys($inverted_index) as $word) {
+    $line1 .= substr(str_pad($idx, 8, "0", STR_PAD_LEFT), -8);
+    $idx += strlen($word) + 8;
+    $line1 .= " ";
+    
+}
+
+$line2 = "";
+$pos = 0;
+$line3 = "";
+
+foreach ($inverted_index as $word => $docs) {
+    $line2 .= $word;
+    $line2 .= substr(str_pad($pos, 8, "0", STR_PAD_LEFT), -8);
+    $pos += 2 * count($docs);
+    
+    foreach ($docs as $doc) {
+        $line3 .= $doc . ',';
+    }
+}
+
+$line3 = rtrim($line3, ',');
+print_r($line1);
+print_r("\n");
+print_r($line2);
+print_r("\n");
+print_r($line3);
+
+$no_of_docs = max(array_map('intval', explode(',', $line3)));
+$doc_term = array_fill(0, $no_of_docs, array_fill(0, (int)substr($line1, 0, 8), 0));
+
 ?>
