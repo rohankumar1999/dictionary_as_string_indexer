@@ -9,6 +9,7 @@ use seekquarry\yioop\library\PhraseParser;
 use seekquarry\yioop\library\FetchUrl;
 use seekquarry\yioop\library\processors\HtmlProcessor;
 use seekquarry\yioop\library\PackedTableTools;
+use seekquarry\yioop\library\LinearAlgebra;
 
 require_once "vendor/autoload.php";
 /*
@@ -19,7 +20,8 @@ require_once "vendor/autoload.php";
 Library::init();
 error_reporting(-1);
 
-$seed_urls = file("my_seeds.txt");
+$seed_urls_filename = $_SERVER['argv'][1];
+$seed_urls = file($seed_urls_filename);
 $documents[count($seed_urls)];
 $urls = [];
 foreach ($seed_urls as $url) {
@@ -28,23 +30,16 @@ foreach ($seed_urls as $url) {
 }
 $web_pages = FetchUrl::getPages(
     $urls
-     // we could list more urls to download
 );
 $html = new HtmlProcessor(max_description_len:20000, summarizer_option:CrawlConstants::CENTROID_WEIGHTED_SUMMARIZER);
-// // print_r($pages[0]['q']);
-// print_r(preg_split("/\s+|\d+|\W+/", $html->process($pages[0]['q'], "https://www.yahoo.com/")['q']));
 for($a = 0; $a<count($seed_urls); $a++){
-    // print_r($web_pages[$a]['q']);
-    $web_page = preg_split("/\s+|\d+|\W+/", $html->process($web_pages[$a]['q'], $seed_urls[$a])['q']);
+    $web_page = preg_split("/\s+|\d+|\W+/", strtolower($html->process($web_pages[$a]['q'], $seed_urls[$a])['q']));
+    $web_page = array_filter($web_page, fn($value) => $value !== "");
     $documents[$a] = array_filter(PhraseParser::stemTerms($web_page, 'en-US'));
-    // print_r($documents[$a]);
-    // print_r($a);
 }
-// print_r($documents[5]);
 $inverted_index = [];
 
 for ($i = 0; $i < count($documents); $i++) {
-    // print_r($inverted_index);
     foreach ($documents[$i] as $word) {
         $entry = $i + 1;
 
@@ -58,18 +53,14 @@ for ($i = 0; $i < count($documents); $i++) {
 
 ksort($inverted_index);
 // print_r($inverted_index);
-print(count($inverted_index));
-print_r("\n");
 $line1 = "";
 $num_words = str_pad(count($inverted_index), 8, "0", STR_PAD_LEFT);
 $line1 .= substr($num_words, -8);
-$line1 .= " ";
 $idx = 0;
 
 foreach (array_keys($inverted_index) as $word) {
     $line1 .= substr(str_pad($idx, 8, "0", STR_PAD_LEFT), -8);
     $idx += strlen($word) + 8;
-    $line1 .= " ";
     
 }
 
@@ -88,13 +79,35 @@ foreach ($inverted_index as $word => $docs) {
 }
 
 $line3 = rtrim($line3, ',');
+
+$partition_tools = new PackedTableTools(
+            ["L1" => "INT",
+            "L2" => "INT",
+            "L3" => "INT"]);
+
+$out_value = $partition_tools->pack([
+    "L1" => strlen($line1),
+    "L2" => strlen($line2),
+    "L3" => strlen($line3)
+]);
+
+$index_file_name = $_SERVER['argv'][2];
+$index_file = fopen($index_file_name, "w");
+fwrite($index_file, $out_value);
+$line1_packed=pack("a*", $line1);
+$line2_packed=pack("a*", $line2);
+$line3_packed=pack("a*", $line3);
+fwrite($index_file, "\n");
+fwrite($index_file, $line1_packed);
+fwrite($index_file, "\n");
+fwrite($index_file, $line2_packed);
+fwrite($index_file, "\n");
+fwrite($index_file, $line3_packed);
+fclose($index_file);
+
 print_r($line1);
 print_r("\n");
 print_r($line2);
 print_r("\n");
 print_r($line3);
-
-$no_of_docs = max(array_map('intval', explode(',', $line3)));
-$doc_term = array_fill(0, $no_of_docs, array_fill(0, (int)substr($line1, 0, 8), 0));
-
-?>
+print_r("\n");
